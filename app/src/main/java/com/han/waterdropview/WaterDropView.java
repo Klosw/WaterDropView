@@ -14,6 +14,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
@@ -67,7 +68,7 @@ public class WaterDropView<T> extends RelativeLayout {
     private OnItemClickListener onItemClickListener; //点击事件接口
     private DataProcessing mDataProcessing; //数据处理接口
     private final Handler mHandler = new Handler(); //Handler
-    private static final String TAG = "han";
+    static final String TAG = "han";
 
     private List<IRectangle> mList = new ArrayList<>(); //存放View的列表
 
@@ -155,7 +156,7 @@ public class WaterDropView<T> extends RelativeLayout {
     }
 
     //数据处理接口 基类
-    public static class BaseDataProcessing<T> implements DataProcessing<T> {
+    public abstract static class BaseDataProcessing<T> implements DataProcessing<T> {
         protected Random random = new Random();
 
         @Override
@@ -247,7 +248,7 @@ public class WaterDropView<T> extends RelativeLayout {
 //        mLayoutTransition.setAnimator(LayoutTransition.CHANGE_DISAPPEARING, );//当View消失的时候其他View的动画
 //        mLayoutTransition.setDuration(200);
 
-        mLayoutTransition.enableTransitionType(LayoutTransition.CHANGE_DISAPPEARING);
+        //mLayoutTransition.enableTransitionType(LayoutTransition.CHANGE_DISAPPEARING);//启用类型转换 啥的
         mLayoutTransition.setStartDelay(LayoutTransition.CHANGE_DISAPPEARING, 0);//源码中带有默认300毫秒的延时，需要移除，不然view添加效果不好！！
     }
 
@@ -371,7 +372,8 @@ public class WaterDropView<T> extends RelativeLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        drawView();
+        post(runDrawView);
+
     }
 
     @Override
@@ -484,7 +486,8 @@ public class WaterDropView<T> extends RelativeLayout {
 
     @NonNull
     private DataProcessing getDefaultDataProcessing() {
-        return new BaseDataProcessing();
+        return new BaseDataProcessing() {
+        };
     }
 
     //处理数据的接口
@@ -537,6 +540,18 @@ class ImageTextView extends LinearLayout {
 
         this.addView(mImageView);
         this.addView(mTextView);
+
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {//保证 高宽获取到了
+                //Log.d(WaterDropView.TAG, "onGlobalLayout: " + getWidth() + "__ " + mImageView.getHeight());
+                if (mImageView.getHeight() != getWidth()) {
+                    int width = getWidth();
+                    mImageView.setLayoutParams(new LayoutParams(width, width));
+                    mTextView.setLayoutParams(new LayoutParams(width, LayoutParams.WRAP_CONTENT));
+                }
+            }
+        });
     }
 
     public void setImageResource(int resid) {
@@ -565,13 +580,8 @@ class ImageTextView extends LinearLayout {
 
 
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-        if (mImageView.getWidth() == 0 && mImageView.getWidth() != getWidth()) {
-            int width = getWidth();
-            mImageView.setLayoutParams(new LayoutParams(width, width));
-            mTextView.setLayoutParams(new LayoutParams(width, LayoutParams.WRAP_CONTENT));
-        }
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
     public ImageTextView(Context context, AttributeSet attrs) {
