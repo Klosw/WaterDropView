@@ -37,7 +37,9 @@ import java.util.Random;
  * 设置数据处理类  setDataProcessing(DataProcessing mDataProcessing) <br/>
  * 设置图片 setImageResource(int id) <br/>
  * 设置文字大小 没有实现 默认是由高减去宽的大小 如果要指定文字大小在 DataProcessing 这个接口中修改  <br/>
- * 设置文字颜色 setTextColor(int color) <br/>
+ * 设置全部文字颜色 setTextColor(int color) <br/>
+ *
+ * 请设置好属性后再添加数据 , 先设置数据 后在 修改属性不一定能生效
  * 设置数据 setData(List<T> data)<br/>
  * 添加数据<br/>
  * 删除数据  removeData(T data) <br/>
@@ -62,6 +64,8 @@ import java.util.Random;
 
 public class WaterDropView<T> extends RelativeLayout {
 
+    private  int mRandomMax = 1000;//循环的最大值
+    private boolean mOverlapping = false;//是否重叠
     private int mImageResource = 0; //图片资源
     private int mTextColor = 0xFFFFFFFF; // 文字默认颜色
 
@@ -179,12 +183,12 @@ public class WaterDropView<T> extends RelativeLayout {
 
         @Override
         public Animation getAnimations(T object, int index) {
-            return getAnimations(Math.abs(random.nextInt() % 300));
+            return getAnimations(Math.abs(random.nextInt() % 1500));
         }
 
         @Override
         public Animator getAnimator(T object, int index) {
-            return getAnimators(Math.abs(random.nextInt() % 300));
+            return getAnimators(Math.abs(random.nextInt() % 1500));
         }
 
         private Animator getAnimators(long time) {
@@ -193,15 +197,15 @@ public class WaterDropView<T> extends RelativeLayout {
             //interpolator = new LinearInterpolator();//线性运动
             interpolator = new AccelerateDecelerateInterpolator();//开始和结束的时候比较慢
 
-
-            ObjectAnimator animation = ObjectAnimator.ofFloat(null, "translationY", 8, -8);//new TranslateAnimation(0, 0, 8, -8);
-            animation.setDuration(1500);//播放时长
+            ObjectAnimator animation = ObjectAnimator.ofFloat(null, "translationY", 0, -16);//new TranslateAnimation(0, 0, 8, -8);
+            animation.setDuration(2000);//播放时长
             animation.setStartDelay(time);
 
             animation.setRepeatCount(ValueAnimator.INFINITE);//循环播放
             animation.setRepeatMode(ValueAnimator.REVERSE);//播放后再倒着播放一次
             //animation.setStartOffset(time);//啥时候开始播放
             animation.setInterpolator(interpolator);
+
             return animation;
         }
 
@@ -274,14 +278,17 @@ public class WaterDropView<T> extends RelativeLayout {
         int P = width * height;//面积
         int P2 = (mWaterWidth * mWaterHight) * listsize;//绘制图片的面积   //4/10 是测试出来的范围 不重叠的范围
         boolean isShow = (width - mWaterWidth * 3 / 2) < mWaterWidth && (height - mWaterHight * 3 / 2) < mWaterHight;//宽度必须大于 图片宽度 高度也是一样的
-        if (P2 > (P * 4 / 10) || isShow) {//小于全部面积的2/3 说明可以放下这么多图片 当前区域太小无法显示完全 ,所以不显示 ,否则容易出bug
-            int i = (P * 4 / 10) / (mWaterWidth * mWaterHight);
-            Log.w(TAG, "drawView:  The current area can't fit so many pictures ! number " + listsize + "   Estimated to store : " + i);
-            Toast.makeText(getContext(), "The current area can't fit so many pictures!", Toast.LENGTH_SHORT).show();
-            // listsize = (P * 2 / 3) / (mWaterWidth * mWaterHight);// 无法修改
-            // Log.w(TAG, "drawView:  The current area can't fit so many pictures  ! Change number " + listsize);
-            return;
+        if (!mOverlapping) { //当为不重叠的时候判断
+            if (P2 > (P * 4 / 10) || isShow) {//小于全部面积的2/3 说明可以放下这么多图片 当前区域太小无法显示完全 ,所以不显示 ,否则容易出bug
+                int i = (P * 4 / 10) / (mWaterWidth * mWaterHight);
+                Log.w(TAG, "drawView:  The current area can't fit so many pictures ! number " + listsize + "   Estimated to store : " + i);
+                Toast.makeText(getContext(), "The current area can't fit so many pictures!", Toast.LENGTH_SHORT).show();
+                // listsize = (P * 2 / 3) / (mWaterWidth * mWaterHight);// 无法修改
+                // Log.w(TAG, "drawView:  The current area can't fit so many pictures  ! Change number " + listsize);
+                return;
+            }
         }
+
         int i = 0;
         do {
             if (mList.size() < listsize) {//如果当前列表少于数据就创建新的
@@ -299,7 +306,7 @@ public class WaterDropView<T> extends RelativeLayout {
                     rectangle = null;
                 }
                 i++;
-                if (i >= 1000) {//数据不能超过 1000
+                if (i >= mRandomMax) {//数据不能超过 1000
                     Toast.makeText(getContext(), "Excessive number of random numbers prevents deadlock from jumping out of the loop!", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -343,6 +350,7 @@ public class WaterDropView<T> extends RelativeLayout {
         if (animator != null) {
             animator.setTarget(imageTextView);
             imageTextView.setTag(animator);
+            //animator.getStartDelay();
             animator.start();
         } else {
             Animation loadAnim = mDataProcessing.getAnimations(data, index);// getAnimations((bounds.x * bounds.y) % 300);//设置开始时间
@@ -466,6 +474,9 @@ public class WaterDropView<T> extends RelativeLayout {
 
     //比较全部大小
     private boolean intersectsAll(IRectangle bounds) {
+        if (mOverlapping) {//如果是 true 判断是否 只要不完全重合就好了吧  或者懒点 直接返回 true
+            return false;
+        }
         boolean intersect = false;
         for (IRectangle lis : mList) {
             if (bounds.intersects(lis)) {
@@ -502,6 +513,15 @@ public class WaterDropView<T> extends RelativeLayout {
     //添加View移除动画
     protected LayoutTransition getLayoutTransitions() {
         return mLayoutTransition;
+    }
+
+
+    public void setOverlapping(boolean mOverlapping) {
+        this.mOverlapping = mOverlapping;
+    }
+
+    public boolean getOverlapping() {
+        return this.mOverlapping;
     }
 
 }
