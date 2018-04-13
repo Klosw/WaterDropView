@@ -2,14 +2,11 @@ package com.han.ui.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.han.waterdropview.R;
-import com.han.waterdropview.WaterDropView;
-
-import java.util.ArrayList;
+import com.han.view.WaterDropView;
 
 /**
  * 测试 Activity
@@ -53,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
              * @return
              */
             @Override
-            public String getText(TextView textView, Object object, int index) {
+            public CharSequence getText(TextView textView, Object object, int index) {
                 // textView.setTextColor(0xFF000000);
                 return super.getText(textView, object, index) + " c";
             }

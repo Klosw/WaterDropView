@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context="com.han.ui.activity.MainActivity">
 
-    <com.han.waterdropview.WaterDropView
+    <com.han.view.WaterDropView
         android:id="@+id/mWaterDropView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

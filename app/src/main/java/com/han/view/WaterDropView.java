@@ -1,4 +1,4 @@
-package com.han.waterdropview;
+package com.han.view;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -135,7 +135,7 @@ public class WaterDropView<T> extends RelativeLayout {
          * @param object
          * @return
          */
-        String getText(TextView textView, T object, int index);
+        CharSequence getText(TextView textView, T object, int index);
 
         /**
          * 动画
@@ -177,7 +177,7 @@ public class WaterDropView<T> extends RelativeLayout {
          * @return
          */
         @Override
-        public String getText(TextView textView, T object, int index) {
+        public CharSequence getText(TextView textView, T object, int index) {
             return object.toString();
         }
 
@@ -336,7 +336,8 @@ public class WaterDropView<T> extends RelativeLayout {
             if (mImageResource != 0) {
                 imageTextView.setImageResource(mImageResource);
             } else {
-                imageTextView.setImageColor(0xFF4488FF);
+                //TODO 设置默认背景颜色
+                //imageTextView.setImageColor(0xFF4488FF);
             }
         } else {//获取到id就设置ID
             imageTextView.setImageResource(id);
@@ -582,7 +583,7 @@ class ImageTextView extends LinearLayout {
         mImageView.setImageDrawable(new ColorDrawable(color));
     }
 
-    public void setText(String text) {
+    public void setText(CharSequence text) {
         mTextView.setText(text);
     }
 
